@@ -565,3 +565,126 @@ public class ProducerConsumer {
         consumer.start();
     }
 }
+// Basic threading in Java
+public class SimpleThreadExample {
+    public static void main(String[] args) {
+        Runnable myThread = () -> {
+            System.out.println("Thread is starting...");
+            try {
+                Thread.sleep(2000); // 2 seconds
+                System.out.println("Thread is running again...");
+                Thread.sleep(1000); // 1 second
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("Thread has finished.");
+        };
+
+        Thread thread = new Thread(myThread);
+
+        System.out.println("Main: Starting the thread");
+        thread.start();
+
+        System.out.println("Main: Waiting for the thread to finish");
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Main: Thread has completed");
+    }
+}
+
+//
+
+import java.util.Random;
+
+class SharedResource {
+    private int data = 0;
+
+    public synchronized void read() {
+        System.out.println("[Reader] Read data: " + data);
+    }
+
+    public synchronized void write(int value) {
+        System.out.println("[Writer] Writing data: " + value);
+        data = value;
+        System.out.println("[Writer] New data set to: " + data);
+    }
+}
+
+abstract class ThreadBase extends Thread {
+    protected SharedResource sharedResource;
+
+    public ThreadBase(SharedResource sharedResource) {
+        this.sharedResource = sharedResource;
+    }
+
+    public abstract void run();
+}
+
+class ReaderThread extends ThreadBase {
+    public ReaderThread(SharedResource sharedResource) {
+        super(sharedResource);
+    }
+
+    @Override
+    public void run() {
+        Random rand = new Random();
+        for (int i = 0; i < 3; i++) {
+            sharedResource.read();
+            try {
+                Thread.sleep((long)(rand.nextDouble() * 500 + 500)); // 0.5 to 1 second
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
+class WriterThread extends ThreadBase {
+    public WriterThread(SharedResource sharedResource) {
+        super(sharedResource);
+    }
+
+    @Override
+    public void run() {
+        Random rand = new Random();
+        for (int i = 0; i < 3; i++) {
+            int value = rand.nextInt(100) + 1;
+            sharedResource.write(value);
+            try {
+                Thread.sleep((long)(rand.nextDouble() * 500 + 500)); // 0.5 to 1 second
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
+public class MultiThreadExample {
+    public static void main(String[] args) {
+        SharedResource sharedResource = new SharedResource();
+
+        Thread[] threads = new Thread[] {
+            new ReaderThread(sharedResource),
+            new WriterThread(sharedResource),
+            new ReaderThread(sharedResource)
+        };
+
+        for (Thread t : threads) {
+            t.start();
+        }
+
+        for (Thread t : threads) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("All threads have finished execution.");
+    }
+}
